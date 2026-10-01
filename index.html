@@ -146,7 +146,7 @@
           });
 
           const leaderboard = Object.values(riders)
-            .sort((a, b) => b.miles - a.miles);
+            .sort((a, b) => b.rides - a.rides);
 
           let html = `
             <div class="leaderboard-title">
