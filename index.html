@@ -13,6 +13,10 @@
   </header>
 
   <main>
+
+    <div class="leaderboard-title">
+      ⭐ Ride Leaderboard ⭐
+    </div>
     <input type="search" id="rider-filter" placeholder="Filter by rider name...">
 
     <div id="leaderboard">
@@ -149,9 +153,7 @@
             .sort((a, b) => b.rides - a.rides);
 
           let html = `
-            <div class="leaderboard-title">
-              ⭐ Ride Leaderboard ⭐
-            </div>
+
 
             <div class="leaderboard-row leaderboard-header">
               <div class="rank">#</div>
