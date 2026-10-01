@@ -13,6 +13,186 @@
   </header>
 
   <main>
+    <input type="search" id="rider-filter" placeholder="Filter by rider name...">
+
+    <div id="leaderboard">
+      Loading leaderboard...
+    </div>
+
+    <style>
+      #leaderboard {
+        max-width: 650px;
+        margin: 0 auto;
+        font-family: inherit;
+      }
+
+      #rider-filter {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 650px;
+        margin: 0 auto 20px;
+        padding: 10px 15px;
+        font-size: 17px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+
+      .leaderboard-title {
+        text-align: center;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 20px;
+      }
+
+      .leaderboard-row {
+        display: grid;
+        grid-template-columns: 55px 1fr 110px 80px;
+        align-items: center;
+        padding: 12px 15px;
+        border-bottom: 1px solid #ddd;
+        font-size: 17px;
+      }
+
+      .leaderboard-header {
+        font-weight: 700;
+        border-bottom: 2px solid #999;
+      }
+
+      .rank {
+        text-align: center;
+      }
+
+      .rider {
+        font-weight: 600;
+      }
+
+      .miles,
+      .rides {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .error {
+        color: #b00020;
+        padding: 20px;
+        text-align: center;
+      }
+
+      @media (max-width: 500px) {
+        .leaderboard-row {
+          grid-template-columns: 40px 1fr 85px 65px;
+          font-size: 16px;
+          padding: 11px 6px;
+        }
+      }
+    </style>
+
+    <script>
+      // Show only the leaderboard rows whose rider name contains the typed text
+      document.getElementById("rider-filter").addEventListener("input", event => {
+        const search = event.target.value.trim().toLowerCase();
+        const rows = document.querySelectorAll(
+          "#leaderboard .leaderboard-row:not(.leaderboard-header)"
+        );
+
+        rows.forEach(row => {
+          const name = row.querySelector(".rider").textContent.toLowerCase();
+          row.style.display = name.includes(search) ? "" : "none";
+        });
+      });
+
+      (async function () {
+
+        const sheetId = "1BAYaH7qbN8FYv8AYKvRzkowGikP0b1RhpxqLUfAqDpw";
+        const url =
+          `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+
+        try {
+          const response = await fetch(url);
+          const text = await response.text();
+
+          const json = JSON.parse(
+            text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1)
+          );
+
+          const rows = json.table.rows;
+
+          const riders = {};
+
+          rows.forEach(row => {
+            const cells = row.c.map(cell => cell ? cell.v : "");
+
+            const fullname = cells[1];
+            const miles = parseFloat(cells[3]) || 0;
+
+            if (!fullname) return;
+
+            const name = `${fullname}`.trim();
+
+            if (!riders[name]) {
+              riders[name] = {
+                name: name,
+                miles: 0,
+                rides: 0
+              };
+            }
+
+            // Add the miles from this ride
+            riders[name].miles += miles;
+
+            // Every spreadsheet row = one ride
+            riders[name].rides += 1;
+          });
+
+          const leaderboard = Object.values(riders)
+            .sort((a, b) => b.miles - a.miles);
+
+          let html = `
+            <div class="leaderboard-title">
+              🚲 Ride Leaderboard
+            </div>
+
+            <div class="leaderboard-row leaderboard-header">
+              <div class="rank">#</div>
+              <div class="rider">Rider</div>
+              <div class="miles">Miles</div>
+              <div class="rides">Rides</div>
+            </div>
+          `;
+
+          leaderboard.forEach((rider, index) => {
+
+            html += `
+              <div class="leaderboard-row">
+                <div class="rank">${index + 1}</div>
+                <div class="rider">${rider.name}</div>
+                <div class="miles">
+                  ${rider.miles.toFixed(1)}
+                </div>
+                <div class="rides">
+                  ${rider.rides}
+                </div>
+              </div>
+            `;
+          });
+
+          document.getElementById("leaderboard").innerHTML = html;
+
+        } catch (error) {
+
+          console.error(error);
+
+          document.getElementById("leaderboard").innerHTML = `
+            <div class="error">
+              Sorry, the leaderboard could not be loaded.
+            </div>
+          `;
+        }
+
+      })();
+    </script>
+
   </main>
 
   <footer>
